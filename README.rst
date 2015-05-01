@@ -6,6 +6,8 @@ via `YAML <http://yaml.org>`_.
 This uses the Python standard-library's logging
 (initialized using ``logging.config.dictConfig``).
 
+.. contents:: Table of Contents
+
 Usage
 -----
 
