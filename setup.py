@@ -32,9 +32,5 @@ setup(
         'pyramid_sawing.tests': ['*.yaml'],
         },
     test_suite='pyramid_sawing.tests',
-    entry_points={
-        'paste.app_factory': [
-            'main = pyramid_sawing.example:main',
-            ],
-        },
+    entry_points={},
     )
