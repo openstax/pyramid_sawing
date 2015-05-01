@@ -16,7 +16,7 @@ description = "Pyramid plugin for YAML logging configuration."
 
 setup(
     name='pyramid_sawing',
-    version='0.0.0',
+    version='1.0.0',
     author='Connexions team',
     author_email='info@cnx.org',
     url="https://github.com/connexions/pyramid_sawing",
