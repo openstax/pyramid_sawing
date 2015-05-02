@@ -11,8 +11,14 @@ import logging
 import socket
 import unittest
 from tempfile import mkstemp
+from wsgiref.util import request_uri
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from pyramid import testing
+from pyramid.request import Request
 
 
 class UtilsTests(unittest.TestCase):
@@ -40,12 +46,17 @@ formatters:
   generic:
     format    : '%(levelname)-5.5s;.;%(message)s'
   contextualized:
+    # filters : [context]
     format    : '%(levelname)-5.5s;.;%(hostname)s;.;%(message)s'
-
+  apache_style:
+    # filters : [environ]
+    format    : '%(REMOTE_ADDR)s - %(REMOTE_USER)s [asctime] "%(REQUEST_METHOD)s %(REQUEST_URI)s %(HTTP_VERSION)s" %(status)s %(bytes)s "%(HTTP_REFERER)s" "%(HTTP_USER_AGENT)s"'
+    datefmt   : '%d/%b/%Y:%H:%M:%S'
 filters:
   context:
     ()        : pyramid_sawing.filters.ContextFilter
-
+  environ:
+    ()        : pyramid_sawing.filters.EnvironFilter
 handlers:
   logio:
     class     : logging.StreamHandler
@@ -58,26 +69,33 @@ handlers:
     formatter : contextualized
     filters   : [context]
     stream    : 'ext://pyramid_sawing.tests.logio'
-
+  logio_for_transit:
+    class     : logging.StreamHandler
+    formatter : apache_style
+    stream    : 'ext://pyramid_sawing.tests.logio'
+  console:
+    class     : logging.StreamHandler
+    formatter : apache_style
+    filters   : [context, environ]
+    stream    : 'ext://sys.stdout'
 loggers:
   pyramid_sawing.tests:
     level     : INFO
     handlers  : [logio_with_context]
     propagate : 0
-
+  my_transit_logger:
+    handlers  : [logio_for_transit]
+    propagate : 0
 root:
   level       : NOTSET
   handlers    : [logio]
 """
-logio = None
+logio = io.BytesIO()
 
 
 class IncludePluginTestCase(unittest.TestCase):
 
     def setUp(self):
-        global logio
-        logio = io.BytesIO()
-
         # Put the config somewhere.
         self.logging_config_filepath = mkstemp()[1]
         with open(self.logging_config_filepath, 'w') as f:
@@ -88,9 +106,8 @@ class IncludePluginTestCase(unittest.TestCase):
             }
         self.addCleanup(os.remove, self.logging_config_filepath)
 
-    def tearDown(self):
         global logio
-        logio = None
+        self.logio_position = logio.tell()
 
     def test_logging(self):
         """Test that the includeme function loads the logging config."""
@@ -109,7 +126,7 @@ class IncludePluginTestCase(unittest.TestCase):
         local.info(local_log_msg)
 
         global logio
-        logio.seek(0)
+        logio.seek(self.logio_position)
         log_lines = logio.read().split('\n')
         self.assertEqual(len(log_lines), 3)
 
@@ -119,3 +136,56 @@ class IncludePluginTestCase(unittest.TestCase):
         parsed_local_msg = log_lines[1].split(';.;')
         self.assertEqual(parsed_local_msg,
                          ['INFO ', socket.gethostname(), local_log_msg])
+
+
+class TransitLoggingTestCase(unittest.TestCase):
+
+    def setUp(self):
+        # Put the config somewhere.
+        self.logging_config_filepath = mkstemp()[1]
+        with open(self.logging_config_filepath, 'w') as f:
+            f.write(CONFIG)
+        # Settings...
+        self.settings = {
+            'pyramid_sawing.file': self.logging_config_filepath,
+            'pyramid_sawing.transit_logging.logger_name': 'my_transit_logger',
+            }
+        self.addCleanup(os.remove, self.logging_config_filepath)
+
+        global logio
+        self.logio_position = logio.tell()
+
+    @property
+    def target(self):
+        from .main import TransitLogger
+        return TransitLogger
+
+    def make_one(self, handler=None, registry=None):
+        if handler is None:
+            handler = mock.Mock()
+        if registry is None:
+            registry = mock.Mock()
+            registry.settings = self.settings
+        return self.target(handler, registry)
+
+    def test_logging_a_request(self):
+        request = Request.blank('/foo')
+        request.environ.update({
+            'HTTP_VERSION': '1.1',
+            'REMOTE_ADDR': '127.0.0.1',
+            })
+        config_kwargs = {'request': request, 'settings': self.settings}
+        with testing.testConfig(**config_kwargs) as config:
+            request.registry = config.registry
+            tween = self.make_one(registry=config.registry)
+            tween(request)
+
+        global logio
+        logio.seek(self.logio_position)
+        log_lines = logio.read().split('\n')
+        self.assertEqual(len(log_lines), 2)
+
+        log_line = log_lines[0]
+        self.assertEqual(
+            log_line,
+            '127.0.0.1 - - [asctime] "GET http://localhost:80/foo 1.1" 200 OK 0 "-" "-"')

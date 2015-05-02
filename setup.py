@@ -15,6 +15,10 @@ tests_require = [
 extras_require = {
     'test': tests_require,
     }
+
+if not IS_PY3:
+    tests_require.append('mock')
+
 description = "Pyramid plugin for YAML logging configuration."
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst')) as readme:
@@ -26,6 +30,7 @@ Change Log
 ==========
 """
 long_description = '\n\n'.join([README, changelog_header, CHANGELOG])
+
 
 setup(
     name='pyramid_sawing',

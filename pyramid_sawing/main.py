@@ -5,10 +5,13 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import logging
 from logging.config import dictConfig
 
 import yaml
+from pyramid.settings import asbool
 
+from .filters import EnvironFilter
 from .utils import local_settings
 
 __all__ = (
@@ -17,6 +20,24 @@ __all__ = (
 
 PROJECT = 'pyramid_sawing'
 PREFIX = PROJECT
+
+
+class TransitLogger:
+    """A Pyramid tween that logs in transit requests."""
+    settings_prefix = '.'.join([PREFIX, 'transit_logging'])
+
+    def __init__(self, handler, registry):
+        self.handler = handler
+        global_settings = registry.settings
+        settings = local_settings(global_settings, self.settings_prefix)
+        logger_name = settings.get('logger_name', 'transit_logger')
+        self.logger = logging.getLogger(logger_name)
+        # Ensure the logger has the EnvironFilter added.
+        self.logger.addFilter(EnvironFilter())
+
+    def __call__(self, request):
+        self.handler(request)
+        self.logger.info(' ')
 
 
 def includeme(config):
@@ -35,3 +56,7 @@ def includeme(config):
         logging_config = yaml.load(f)
 
     dictConfig(logging_config)
+
+    # Enable transit logging?
+    if asbool(settings.get('transit_logging.enabled?', False)):
+        config.add_tween('pyramid_sawing.main.TransitLogger')

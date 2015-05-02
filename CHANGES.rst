@@ -9,7 +9,8 @@
 1.1.0
 -----
 
-- 
+- Add a transit (request) logging feature that mimics functionality
+  found in ``pyramid_translogger``. [pumazi]
 
 1.0.0
 -----

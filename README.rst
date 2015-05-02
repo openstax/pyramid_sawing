@@ -71,6 +71,47 @@ An example configuration might look like this::
 A typical *gotcha* in configuring this is to forget the 'version'. Please
 make sure you include ``version: 1`` in your configuration.
 
+Additional Features
+-------------------
+
+Transit Logging
+~~~~~~~~~~~~~~~
+
+This resembles the functionality you would find in ``pyramid_translogger``
+except that this implementation is more configurable.
+
+To enable this feature, add the following line to your configuraton/settings.
+
+::
+
+    pyramid_sawing.transit_logging.enabled? = yes
+    # Optional...
+    # The default logger_name is `transit_logger`
+    pyramid_sawing.transit_logging.logger_name = lumberjack
+
+A template for configuring the transit logger would be something like::
+
+    formatters:
+      apache_style:
+        # filters : [environ]
+        format    : '%(REMOTE_ADDR)s - %(REMOTE_USER)s [%(asctime)s] "%(REQUEST_METHOD)s %(REQUEST_URI)s %(HTTP_VERSION)s" %(status)s %(bytes)s "%(HTTP_REFERER)s" "%(HTTP_USER_AGENT)s"'
+        datefmt   : '%d/%b/%Y:%H:%M:%S'
+    filters:
+      environ:
+        ()        : pyramid_sawing.filters.EnvironFilter
+    handlers:
+      console:
+        class     : logging.StreamHandler
+        formatter : apache_style
+        filters   : [environ]
+        stream    : 'ext://sys.stdout'
+    loggers:
+      transit_logger:
+        handlers  : [console]
+        propagate : 0
+
+This should give you the exact same output as ``pyramid_translogger``.
+
 License
 -------
 
