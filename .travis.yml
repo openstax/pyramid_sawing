@@ -1,0 +1,27 @@
+language: python
+# Note, /usr/bin/python is used because we must install to the system python
+# in order to make the package available to the plpython Postgres extension.
+python:
+  - "2.7"
+  - "3.4"
+before_install:
+  # Install the coverage utility and coveralls reporting utility
+  - sudo apt-get install python-pip
+  # Scripts get installed to /usr/local/bin
+  - sudo /usr/bin/pip install coverage
+  - sudo /usr/bin/pip install coveralls
+install:
+  - sudo /usr/bin/pip install .
+before_script:
+  # Set up postgres roles
+  - sudo -u postgres psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
+  # Set up the database
+  - sudo -u postgres createdb -O cnxarchive cnxarchive-testing
+script:
+  # This is the same as `python setup.py test` with a coverage wrapper.
+  - sudo /usr/local/bin/coverage run --source=cnxpublishing setup.py test
+after_success:
+  # Report test coverage to coveralls.io
+  - /usr/local/bin/coveralls
+notifications:
+  email: false

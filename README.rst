@@ -1,6 +1,9 @@
 Pyramid Sawing
 ==============
 
+.. image:: https://travis-ci.org/Connexions/pyramid_sawing.svg
+   :target: https://travis-ci.org/Connexions/pyramid_sawing
+
 A Pyramid framework plugin for configurating logging
 via `YAML <http://yaml.org>`_.
 This uses the Python standard-library's logging
