@@ -6,10 +6,11 @@
 
    - feature message [author]
 
-1.2.0
+1.1.1
 -----
 
-- 
+- Fix the transit logging tween by returning the response,
+  which caused secondary tweens and event subscribers to fail. [pumazi]
 
 1.1.0
 -----

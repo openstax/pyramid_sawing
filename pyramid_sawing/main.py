@@ -38,6 +38,7 @@ class TransitLogger:
     def __call__(self, request):
         self.handler(request)
         self.logger.info(' ')
+        return request.response
 
 
 def includeme(config):
