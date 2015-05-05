@@ -34,7 +34,7 @@ long_description = '\n\n'.join([README, changelog_header, CHANGELOG])
 
 setup(
     name='pyramid_sawing',
-    version='1.1.1',
+    version='1.2.0',
     author='Connexions team',
     author_email='info@cnx.org',
     url="https://github.com/connexions/pyramid_sawing",
