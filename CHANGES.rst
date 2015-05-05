@@ -6,10 +6,11 @@
 
    - feature message [author]
 
-1.2.0
+1.1.2
 -----
 
--
+- Fix the transit logging tween to return the response coming from
+  the handler rather than the one attached to the request object. [pumazi]
 
 1.1.1
 -----
