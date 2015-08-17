@@ -6,6 +6,11 @@
 
    - feature message [author]
 
+1.2.1
+-----
+
+- Fix tests for Python3 compatiblity. [pumazi]
+
 1.2.0
 -----
 
