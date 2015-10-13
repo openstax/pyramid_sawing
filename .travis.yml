@@ -9,6 +9,10 @@ before_install:
   - pip install coveralls
 install:
   - pip install .
+before_script:
+  - pip install pep8
+  - pep8 --exclude=tests.py *.py pyramid_sawing/
+  - pep8 --max-line-length=200 pyramid_sawing/tests.py
 script:
   # This is the same as `python setup.py test` with a coverage wrapper.
   - coverage run --source=pyramid_sawing setup.py test
