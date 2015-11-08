@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 import os
+import sys
 import io
 import logging
 import socket
@@ -90,7 +91,11 @@ root:
   level       : NOTSET
   handlers    : [logio]
 """
-logio = io.BytesIO()
+
+if sys.version_info < (3,):
+    logio = io.BytesIO()
+else:
+    logio = io.StringIO()
 
 
 class IncludePluginTestCase(unittest.TestCase):
@@ -120,15 +125,16 @@ class IncludePluginTestCase(unittest.TestCase):
         local = logging.getLogger('pyramid_sawing.tests')
 
         # Try logging...
-        root_log_msg = 'O.o'
+        root_log_msg = 'O⋮o'
         root.error(root_log_msg)
         local_log_msg = '>,<'
         local.info(local_log_msg)
 
         global logio
         logio.seek(self.logio_position)
-        log_lines = logio.read().split('\n')
-        self.assertEqual(len(log_lines), 3)
+        log_lines = logio.readlines()
+        self.assertEqual(len(log_lines), 2)
+        log_lines = [l.rstrip('\n') for l in log_lines]
 
         # Check the root message...
         parsed_root_msg = log_lines[0].split(';.;')
@@ -182,8 +188,9 @@ class TransitLoggingTestCase(unittest.TestCase):
 
         global logio
         logio.seek(self.logio_position)
-        log_lines = logio.read().split('\n')
-        self.assertEqual(len(log_lines), 2)
+        log_lines = logio.readlines()
+        self.assertEqual(len(log_lines), 1)
+        log_lines = [l.rstrip('\n') for l in log_lines]
 
         log_line = log_lines[0]
         self.assertEqual(
