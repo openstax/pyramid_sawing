@@ -6,15 +6,12 @@
 
    - feature message [author]
 
-1.2.1
+1.1.3
 -----
 
-- Fix tests for Python3 compatiblity. [pumazi]
-
-1.2.0
------
-
-- 
+- Adjust the transit logging tween to set and return the response attribute
+  of the request object.
+- Fix tests for Python3 compatiblity.
 
 1.1.2
 -----
