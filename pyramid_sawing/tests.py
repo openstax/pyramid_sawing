@@ -180,10 +180,14 @@ class TransitLoggingTestCase(unittest.TestCase):
             'HTTP_VERSION': '1.1',
             'REMOTE_ADDR': '127.0.0.1',
             })
+        response = mock.Mock()
+        response.status = '404 Not Found'
+        response.headers = {'content-length': 0}
+        handler = mock.Mock(return_value=response)
         config_kwargs = {'request': request, 'settings': self.settings}
         with testing.testConfig(**config_kwargs) as config:
             request.registry = config.registry
-            tween = self.make_one(registry=config.registry)
+            tween = self.make_one(handler=handler, registry=config.registry)
             tween(request)
 
         global logio
@@ -195,4 +199,4 @@ class TransitLoggingTestCase(unittest.TestCase):
         log_line = log_lines[0]
         self.assertEqual(
             log_line,
-            '127.0.0.1 - - [asctime] "GET http://localhost:80/foo 1.1" 200 OK 0 "-" "-"')
+            '127.0.0.1 - - [asctime] "GET http://localhost:80/foo 1.1" 404 Not Found 0 "-" "-"')

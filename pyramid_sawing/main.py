@@ -36,9 +36,9 @@ class TransitLogger:
         self.logger.addFilter(EnvironFilter())
 
     def __call__(self, request):
-        response = self.handler(request)
+        request.response = self.handler(request)
         self.logger.info(' ')
-        return response
+        return request.response
 
 
 def includeme(config):
